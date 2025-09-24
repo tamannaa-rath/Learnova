@@ -27,6 +27,7 @@ import {
 import Link from "next/link";
 import { analytics } from "@/lib/firebaseConfig";
 import { logEvent } from "firebase/analytics";
+import LearnovaChatbot from "@/components/ChatBot";
 
 // Constants moved outside component for better performance
 const PARTICLES_DATA = [
@@ -270,7 +271,7 @@ export default function AboutPage() {
         <div
           className="absolute w-96 h-96 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"
           style={mouseOrbStyle}
-        />
+          />
 
         {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden">
@@ -291,6 +292,9 @@ export default function AboutPage() {
 
       <div className="min-h-screen relative z-50">
         <Navbar />
+        <div className="z-50">
+        <LearnovaChatbot/>
+        </div>
 
         {/* Hero Section */}
         <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
