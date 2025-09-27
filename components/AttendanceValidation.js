@@ -397,7 +397,7 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
           <Button
             onClick={submitExceptionRequest}
             variant="outline"
-            className="w-full border-orange-500/30 text-orange-400 hover:bg-orange-500/10 py-4 rounded-2xl"
+            className="w-full border-orange-500/30 bg-gray-200 text-orange-400 hover:bg-orange-500/10 py-4 rounded-2xl"
           >
             Submit Exception Request
           </Button>
@@ -610,7 +610,7 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
         <Button
           onClick={() => router.push("/register")}
           variant="outline"
-          className="border-purple-400/30 text-purple-400 hover:bg-purple-500/10 px-8 py-3 rounded-2xl backdrop-blur-sm"
+          className="border-purple-400/30 text-purple-500 hover:bg-purple-500/10 px-8 py-3 bg-gray-200 rounded-2xl backdrop-blur-sm"
         >
           <span className="flex items-center gap-2">
             <svg
