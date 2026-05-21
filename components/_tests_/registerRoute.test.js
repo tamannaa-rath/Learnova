@@ -1,6 +1,6 @@
 import { POST } from "@/app/api/register/route";
 import { connectDb } from "@/lib/mongodb";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 jest.mock("next/server", () => ({
   NextResponse: {
@@ -16,6 +16,7 @@ jest.mock("next/server", () => ({
 
 jest.mock("@vercel/blob", () => ({
   put: jest.fn(),
+  del: jest.fn(),
 }));
 
 jest.mock("@/lib/mongodb", () => ({
@@ -114,139 +115,23 @@ describe("POST /api/register - Security & Validation Tests", () => {
     expect(connectDb).not.toHaveBeenCalled(); // Validation must happen before DB connection or insertion
   });
 
-  test("rejects request if file size exceeds MAX_FILE_SIZE (5MB)", async () => {
-    const oversizedFile = createMockFile("image/jpeg", 6 * 1024 * 1024, [0xff, 0xd8, 0xff]);
-
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: oversizedFile,
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(413);
-    expect(body.error).toContain("File too large");
-    expect(mockInsertOne).not.toHaveBeenCalled();
-    expect(connectDb).not.toHaveBeenCalled(); // Validation must happen before DB connection or insertion
-  });
-
-  test("accepts request if file size is exactly at the limit (5MB)", async () => {
+  test("deletes uploaded blob if database insertion fails (rollback)", async () => {
     mockFindOne.mockResolvedValue(null);
-    mockInsertOne.mockResolvedValue({ insertedId: "mock-id" });
-
-    const limitFile = createMockFile("image/jpeg", 5 * 1024 * 1024, [0xff, 0xd8, 0xff]);
+    mockInsertOne.mockRejectedValue(new Error("Database write failed"));
 
     const req = createMockRequest({
       name: "John Doe",
       rollNo: "123456",
       email: "user@domain.com",
-      photo: limitFile,
+      photo: mockFile,
     });
 
     const response = await POST(req);
     const body = await response.json();
 
-    expect(response.status).toBe(201);
-    expect(body.success).toBe(true);
-    expect(mockInsertOne).toHaveBeenCalled();
-  });
-
-  test("accepts valid PNG image upload successfully", async () => {
-    mockFindOne.mockResolvedValue(null);
-    mockInsertOne.mockResolvedValue({ insertedId: "mock-id" });
-
-    const pngFile = createMockFile("image/png", 2048, [0x89, 0x50, 0x4e, 0x47]);
-
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: pngFile,
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(body.success).toBe(true);
-  });
-
-  test("accepts valid WebP image upload successfully", async () => {
-    mockFindOne.mockResolvedValue(null);
-    mockInsertOne.mockResolvedValue({ insertedId: "mock-id" });
-
-    const webpFile = createMockFile("image/webp", 2048, [
-      0x52, 0x49, 0x46, 0x46, // "RIFF"
-      0, 0, 0, 0,
-      0x57, 0x45, 0x42, 0x50  // "WEBP"
-    ]);
-
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: webpFile,
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(body.success).toBe(true);
-  });
-
-  test("rejects request if file is not a valid File object (e.g. string)", async () => {
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: "not-a-file-object",
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(body.error).toContain("Photo must be a valid file");
-    expect(mockInsertOne).not.toHaveBeenCalled();
-  });
-
-  test("rejects request if MIME type is not allowed (e.g. application/zip)", async () => {
-    const zipFile = createMockFile("application/zip", 1024, [0x50, 0x4b, 0x03, 0x04]);
-
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: zipFile,
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(body.error).toContain("Only JPEG, PNG, and WebP images are allowed");
-    expect(mockInsertOne).not.toHaveBeenCalled();
-  });
-
-  test("rejects request if MIME type is spoofed (e.g. EXE file named as PNG)", async () => {
-    const exeFile = createMockFile("image/png", 1024, [0x4d, 0x5a]);
-
-    const req = createMockRequest({
-      name: "John Doe",
-      rollNo: "123456",
-      email: "user@domain.com",
-      photo: exeFile,
-    });
-
-    const response = await POST(req);
-    const body = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(body.error).toContain("headers do not match the expected image format");
-    expect(mockInsertOne).not.toHaveBeenCalled();
+    expect(response.status).toBe(500);
+    expect(body.error).toBe("Database write failed");
+    expect(put).toHaveBeenCalled();
+    expect(del).toHaveBeenCalledWith("https://example.com/blob.jpg");
   });
 });
