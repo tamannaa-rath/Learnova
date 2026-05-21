@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "./Navbar";
 import { useAuth } from "@/hooks/useAuth";
-
+import AttendanceChart from "./AttendanceChart";
 const StudentDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [attendanceStatus, setAttendanceStatus] = useState("pending");
@@ -577,6 +577,9 @@ const StudentDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Attendance Chart */}
+            <AttendanceChart />
 
             {/* Quick Stats */}
             <div className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
