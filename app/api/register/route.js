@@ -4,6 +4,7 @@ import { connectDb } from "@/lib/mongodb";
 import { jsonError, jsonSuccess } from "@/lib/api-response";
 import { suggestEmailCorrection } from "@/utils/emailValidation";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
+import { z } from "zod";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -12,6 +13,21 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/webp",
 ]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const registerSchema = z.object({
+  name: z.string({
+    required_error: "Name is required",
+    invalid_type_error: "Name must be a string",
+  }).trim().min(1, "Name is required").max(100),
+  rollNo: z.string({
+    required_error: "Roll number is required",
+    invalid_type_error: "Roll number must be a string",
+  }).trim().min(1, "Roll number is required").max(50),
+  email: z.string({
+    required_error: "Email is required",
+    invalid_type_error: "Email must be a string",
+  }).trim().email("Invalid email format").toLowerCase(),
+});
 
 /**
  * Leading magic bytes for each permitted image format.
@@ -29,8 +45,6 @@ const MAGIC_BYTES = {
 };
 const WEBP_MARKER = [0x57, 0x45, 0x42, 0x50]; // bytes 8-11 in a WEBP file
 
-const normalizeText = (value) =>
-  typeof value === "string" ? value.trim() : "";
 
 const getImageExtension = (mimeType) => {
   switch (mimeType) {
@@ -91,13 +105,25 @@ export async function POST(req) {
     const decodedToken = authResult.decodedToken;
 
     const formData = await req.formData();
-    const name   = normalizeText(formData.get("name"));
-    const rollNo = normalizeText(formData.get("rollNo"));
-    const email  = normalizeText(formData.get("email")).toLowerCase();
-    const file   = formData.get("photo");
+    const rawName = formData.get("name");
+    const rawRollNo = formData.get("rollNo");
+    const rawEmail = formData.get("email");
+    const file = formData.get("photo");
 
-    if (!name || !rollNo || !email || !file) {
-      return jsonError("Name, rollNo, email, and photo are required", 400);
+    const validationResult = registerSchema.safeParse({
+      name: rawName,
+      rollNo: rawRollNo,
+      email: rawEmail,
+    });
+
+    if (!validationResult.success) {
+      return jsonError(validationResult.error.errors[0].message, 400);
+    }
+
+    const { name, rollNo, email } = validationResult.data;
+
+    if (!file || typeof file === "string" || !file.type) {
+      return jsonError("Photo is required and must be a valid file", 400);
     }
 
     if (!EMAIL_PATTERN.test(email)) {
