@@ -821,11 +821,15 @@ export default function ActivityPage() {
                   engaging through our interactive platform.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button className="bg-gradient-to-r from-accent to-purple-500 hover:shadow-xl hover:shadow-accent/25 transition-all duration-300 hover:scale-105 text-foreground font-semibold">
+                  <Button 
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="bg-gradient-to-r from-accent to-purple-500 hover:shadow-xl hover:shadow-accent/25 transition-all duration-300 hover:scale-105 text-foreground font-semibold"
+                  >
                     <Sparkles className="w-5 h-5 mr-2" />
                     Start Playing Now
                   </Button>
                   <Button
+                    onClick={() => router.push('/leaderboards')}
                     variant="outline"
                     className="border-border text-foreground bg-muted hover:bg-muted/80 transition-all duration-300"
                   >
