@@ -31,9 +31,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "./Navbar";
+import { useTheme } from "next-themes";
 
 export default function UniversalSettings() {
   const { user } = useAuth();
+  const { setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -797,9 +799,10 @@ export default function UniversalSettings() {
                       ].map((theme) => (
                         <button
                           key={theme.value}
-                          onClick={() =>
-                            updateSetting("appearance", "theme", theme.value)
-                          }
+                          onClick={() => {
+                            updateSetting("appearance", "theme", theme.value);
+                            setTheme(theme.value);
+                          }}
                           className={`flex flex-col items-center space-y-2 p-4 rounded-lg border transition-all duration-200 ${
                             settings.appearance.theme === theme.value
                               ? "border-blue-500 bg-blue-500/20"

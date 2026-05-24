@@ -42,15 +42,21 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
     currentLocation: null, // Add this field
   });
 
-  // Load settings from Firestore
+  // Load settings from secure API endpoint
   useEffect(() => {
     const loadSettings = async () => {
+      if (!user) return; // Wait for user to be authenticated
+
       try {
-        const settingsDoc = await getDoc(
-          doc(db, "attendance_settings", "current_settings"),
-        );
-        if (settingsDoc.exists()) {
-          const settingsData = settingsDoc.data();
+        const token = await user.getIdToken();
+        const response = await fetch("/api/attendance/settings", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const settingsData = await response.json();
           setSettings(settingsData);
           checkTimeValidity(settingsData.timeWindow);
         }
@@ -61,7 +67,7 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
     };
 
     loadSettings();
-  }, []);
+  }, [user]);
 
   const checkTimeValidity = (timeWindow) => {
     if (!timeWindow) return;
@@ -104,7 +110,7 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 15000,
-          maximumAge: 30000,
+          maximumAge: 0,
         });
       });
 
@@ -183,15 +189,32 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
     requestLocation();
   };
 
-  const validatePasscode = () => {
-    if (!settings) return;
-    if (passcode === settings.passcode) {
-      setPasscodeError("");
-      setCurrentStep(3);
-    } else {
-      setPasscodeError(
-        "Invalid passcode. Please contact your teacher for the correct code.",
-      );
+  const validatePasscode = async () => {
+    if (!passcode.trim()) return;
+    setIsLoading(true);
+    setPasscodeError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/attendance/validate-passcode", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await response.json();
+      if (response.ok && data.valid) {
+        setCurrentStep(3);
+      } else {
+        setPasscodeError(
+          data.error || "Invalid passcode. Please contact your teacher for the correct code."
+        );
+      }
+    } catch (error) {
+      setPasscodeError("Error validating passcode. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -216,7 +239,7 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 15000,
-          maximumAge: 30000,
+          maximumAge: 0,
         });
       });
 
@@ -584,7 +607,10 @@ const AttendanceValidation = ({ onValidationSuccess }) => {
           <input
             type="password"
             value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "");
+              setPasscode(val);
+            }}
             placeholder="• • • • • •"
             className="w-full bg-white/5 border-2 border-white/20 rounded-2xl px-8 py-6 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-500/50 focus:border-purple-500 text-center text-3xl tracking-[0.5em] font-bold transition-all duration-300"
             maxLength={8}
