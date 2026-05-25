@@ -456,9 +456,6 @@ export default function LearnovaChatbot() {
   // Theme tokens - Enhanced for rich glassmorphism & premium UI spacing
   // ---------------------------------------------------------------------------
   const t = {
-  
-  const themeTokens = {
-  const t = {
     bg: isDarkMode 
       ? "bg-gray-950/90 backdrop-blur-xl text-white" 
       : "bg-white/95 backdrop-blur-xl text-gray-900",
