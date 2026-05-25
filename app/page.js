@@ -36,7 +36,6 @@ import {
 import Link from "next/link";
 import { analytics } from "@/lib/firebaseConfig";
 import { logEvent } from "firebase/analytics";
-import LearnovaChatbot from "@/components/ChatBot";
 
 // Constants moved outside component for better performance
 const PARTICLES_DATA = [
@@ -772,7 +771,7 @@ export default function AboutPage() {
                     return (
                       <ItemWrapper
                         key={stat.id}
-                        href={stat.href || null}
+                        {...(isClickable ? { href: stat.href } : {})}
                         onMouseEnter={() => setHoveredRing(stat.id)}
                         onMouseLeave={() => setHoveredRing(null)}
                         className={`block p-5 border rounded-2xl transition-all duration-500 ${

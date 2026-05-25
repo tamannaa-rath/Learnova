@@ -10,30 +10,21 @@ const JWKS = createRemoteJWKSet(JWKS_URL);
 
 const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-const BASE64_CHARS =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-function generateNonce() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-
-  let nonce = "";
-  for (let index = 0; index < bytes.length; index += 3) {
-    const byte1 = bytes[index];
-    const byte2 = bytes[index + 1];
-    const byte3 = bytes[index + 2];
-
-    nonce += BASE64_CHARS[byte1 >> 2];
-    nonce += BASE64_CHARS[((byte1 & 0x03) << 4) | (byte2 >> 4)];
-    nonce +=
-      index + 1 < bytes.length
-        ? BASE64_CHARS[((byte2 & 0x0f) << 2) | (byte3 >> 6)]
-        : "=";
-    nonce += index + 2 < bytes.length ? BASE64_CHARS[byte3 & 0x3f] : "=";
-  }
-
-  return nonce;
-}
+const PAGE_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.public.blob.vercel-storage.com https://github.com",
+  "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebase.io https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.public.blob.vercel-storage.com https://api.emailjs.com",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
 
 /**
  * Verifies a Firebase ID token's RS256 signature and all standard claims.
@@ -74,26 +65,6 @@ export async function middleware(request) {
   const isPage = !pathname.startsWith("/_next") && 
                  !pathname.startsWith("/api") && 
                  !pathname.match(/\.(?:png|jpg|jpeg|gif|svg|ico|css|js|woff2?|json)$/);
-
-  let csp;
-
-  if (isPage) {
-    csp = [
-      "default-src 'self'",
-      `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com`,
-      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.public.blob.vercel-storage.com https://github.com",
-      "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebase.io https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.public.blob.vercel-storage.com https://api.emailjs.com",
-      "media-src 'self' blob:",
-      "worker-src 'self' blob:",
-      "frame-src 'none'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "upgrade-insecure-requests",
-    ].join("; ");
-  }
 
   const requestHeaders = new Headers(request.headers);
 
@@ -222,7 +193,7 @@ export async function middleware(request) {
   });
 
   if (isPage) {
-    response.headers.set("Content-Security-Policy", csp);
+    response.headers.set("Content-Security-Policy", PAGE_CSP);
   }
 
   return response;

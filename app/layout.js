@@ -9,8 +9,6 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import LearnovaChatbot from "@/components/ChatBot";
 import ClientLayout from "@/components/ClientLayout";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
@@ -272,13 +270,6 @@ export default function RootLayout({ children }) {
                   </main>
 
                   <ScrollToTop />
-
-                  {/* Chatbot safely isolated inside ErrorBoundary */}
-                  <div className="z-50">
-                    <ErrorBoundary>
-                      <LearnovaChatbot />
-                    </ErrorBoundary>
-                  </div>
 
                   <Footer />
                   <ClientLayout />
