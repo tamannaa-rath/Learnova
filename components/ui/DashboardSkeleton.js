@@ -178,14 +178,6 @@ const DashboardSkeleton = () => {
         </div>
       </div>
 
-      {/* Shimmer Animation */}
-      <style jsx>{`
-        @keyframes shimmer {
-          100% {
-            transform: translateX(100%);
-          }
-        }
-      `}</style>
     </div>
   );
 };
