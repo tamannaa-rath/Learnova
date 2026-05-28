@@ -29,6 +29,15 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
 
+      - name: ♻️ Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ matrix.node-version }}-
+            ${{ runner.os }}-next-
+
       - name: 🔧 Fix Tailwind CSS native binding
         run: |
           OXIDE_VER=$(node -p "require('./node_modules/@tailwindcss/oxide/package.json').version")
