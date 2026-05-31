@@ -13,10 +13,17 @@ export default function XpProgressBar({ currentLevel = 1, currentXp = 0 }) {
   const xpIntoCurrentLevel = currentXp - prevLevelXp;
   const xpRequiredForNextLevel = nextLevelXp - prevLevelXp;
 
-  const progressPercentage = Math.min(
-    100,
-    Math.max(0, (xpIntoCurrentLevel / xpRequiredForNextLevel) * 100)
-  );
+  // Prevent division by zero and invalid progress values
+  const progressPercentage =
+    xpRequiredForNextLevel > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (xpIntoCurrentLevel / xpRequiredForNextLevel) * 100
+          )
+        )
+      : 0;
 
   return (
     <div className="flex flex-col gap-2 p-4 rounded-xl bg-white/5 backdrop-blur-md border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)] w-full">
