@@ -39,10 +39,15 @@ const devRateLimitMap = new Map();
 
 const AUTH_RATE_LIMITED_PATHS = [
   "/api/auth/login",
+  "/api/signup",
   "/api/auth/signup",
+  "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/auth/verify-email",
   "/api/auth/verify-otp",
+  "/api/auth/verify-email",
+  "/api/auth/logout",
 ];
 
 const PUBLIC_API_PATHS = [
@@ -418,9 +423,12 @@ export async function middleware(request) {
   );
 
   // General API route protection (non-dashboard routes under /api/)
-  if (pathname.startsWith("/api/") && pathname !== "/api/check-groq-config") {
-    const isPublicApiRoute = PUBLIC_API_PATHS.some((path) => pathname.startsWith(path));
-    if (!matchedDashboard && !isPublicApiRoute) {
+  if (
+    pathname.startsWith("/api/") &&
+    pathname !== "/api/check-groq-config" &&
+    !isAuthRoute(pathname)
+  ) {
+    if (!matchedDashboard) {
       if (!isTokenValid) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
