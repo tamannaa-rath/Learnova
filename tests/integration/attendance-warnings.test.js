@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 const handler = () => {};
 describe.skip('Attendance Warnings API Integration Tests', () => {
   it('should return 400 Bad Request if instituteId is missing', async () => {
