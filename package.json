@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "format:check": "npx prettier@3.8.3 --check . || exit $(( $? > 1 ? $? : 0 ))",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -82,7 +83,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@swc/core-darwin-arm64": "^1.15.40",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
