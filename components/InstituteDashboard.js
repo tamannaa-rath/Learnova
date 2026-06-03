@@ -101,6 +101,9 @@ const InstituteDashboard = () => {
     teachers,
     attendanceRequests,
     setAttendanceRequests,
+    loadMoreRequests,
+    hasMoreRequests,
+    loadingRequests,
     loading: initialLoading,
     error,
   } = useAttendance({ role: "institute", user });
@@ -733,28 +736,28 @@ const InstituteDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard
           title="Present Today"
-          value="1,112"
-          subtitle="89.2% of total"
+          value={dashboardData.todayAttendance?.toLocaleString() ?? "N/A"}
+          subtitle={`${dashboardData.todayAttendance ? ((dashboardData.todayAttendance/dashboardData.totalStudents)*100).toFixed(1) : 0}% of total`}
           icon={CheckCircle}
           color="green"
         />
         <StatCard
           title="Absent Today"
-          value="135"
-          subtitle="10.8% of total"
+          value={dashboardData.totalStudents - dashboardData.todayAttendance || 0}
+          subtitle={`${dashboardData.totalStudents ? (((dashboardData.totalStudents - dashboardData.todayAttendance)/dashboardData.totalStudents)*100).toFixed(1) : 0}% of total`}
           icon={XCircle}
           color="red"
         />
         <StatCard
           title="Late Arrivals"
-          value="23"
-          subtitle="1.8% of total"
+          value={dashboardData.lateArrivals ?? "N/A"}
+          subtitle={dashboardData.lateArrivals ? `${((dashboardData.lateArrivals/dashboardData.totalStudents)*100).toFixed(1)}% of total` : "Data unavailable"}
           icon={Clock}
           color="yellow"
         />
         <StatCard
           title="Pending Requests"
-          value="8"
+          value={dashboardData.pendingRequests ?? 0}
           subtitle="Awaiting approval"
           icon={AlertTriangle}
           color="purple"
@@ -831,6 +834,17 @@ const InstituteDashboard = () => {
             </div>
           ))}
         </div>
+        {hasMoreRequests && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={loadMoreRequests}
+              disabled={loadingRequests}
+              className="px-6 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingRequests ? "Loading..." : "Load More Requests"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -894,6 +908,28 @@ const InstituteDashboard = () => {
                 type="checkbox"
                 defaultChecked
                 className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-900"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3 border-t border-gray-700">
+              <span className="text-sm font-medium text-muted-foreground dark:text-gray-300">
+                Enable Automated Warnings
+              </span>
+              <input
+                type="checkbox"
+                defaultChecked
+                className="rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-900"
+              />
+            </div>
+            <div className="flex items-center justify-between py-3 border-t border-gray-700">
+              <span className="text-sm font-medium text-muted-foreground dark:text-gray-300">
+                Low Attendance Threshold (%)
+              </span>
+              <input
+                type="number"
+                defaultValue={75}
+                min={0}
+                max={100}
+                className="w-20 px-2 py-1 bg-card/40 dark:bg-black/40 border border-white/20 rounded-lg text-foreground dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
               />
             </div>
           </div>

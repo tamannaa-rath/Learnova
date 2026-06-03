@@ -18,28 +18,29 @@ import {
 export default function AuthForm({
   isLogin,
   selectedRole,
-  email,
-  setEmail,
-  password,
-  setPassword,
-  fullName,
-  setFullName,
-  instituteName,
-  setInstituteName,
-  inviteCode,
-  setInviteCode,
-  errors,
-  setErrors,
   isLoading,
   onSubmit,
   onGoogleLogin,
   onRoleChange,
   onToggleLogin,
   onForgotPassword,
+  errors: externalErrors = {},
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    instituteName: "",
+    email: "",
+    password: "",
+    inviteCode: "",
+    confirmPassword: "", 
+  });
+
+  const [internalErrors, setErrors] = useState({});
+  const errors = { ...internalErrors, ...externalErrors };
+  const { fullName, instituteName, email, password, inviteCode, confirmPassword } = formData;
 
   const passwordStrength = useMemo(
     () => getPasswordStrength(password || ""),
@@ -51,11 +52,14 @@ export default function AuthForm({
   );
 
   const clearError = (field) => {
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
+  if (internalErrors[field]) {
+    setErrors((prev) => {
+      const updatedErrors = { ...prev };
+      delete updatedErrors[field];
+      return updatedErrors;
+    });
+  }
+};
   const validateField = (field, value) => {
     const result = validateAuthField(field, value, {
       isLogin,
@@ -70,10 +74,13 @@ export default function AuthForm({
     }
   };
 
-  const handleFieldChange = (field, setter) => (value) => {
-    setter(value);
+const handleFieldChange = (field) => (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
-    if (errors[field]) {
+    if (internalErrors[field]) {
       validateField(field, value);
     }
 
@@ -97,6 +104,28 @@ export default function AuthForm({
   const handleSubmit = (event) => {
     event.preventDefault();
 
+    const fieldsToValidate = isLogin
+      ? ["email", "password"]
+      : ["fullName", "email", "password", "confirmPassword"];
+    const nextErrors = {};
+
+    fieldsToValidate.forEach((field) => {
+      const result = validateAuthField(field, formData[field], {
+        isLogin,
+        password,
+        confirmPassword,
+      });
+
+      if (result !== true) {
+        nextErrors[field] = result;
+      }
+    });
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...nextErrors }));
+      return;
+    }
+
     if (!isLogin && password !== confirmPassword) {
       setErrors((prev) => ({
         ...prev,
@@ -105,11 +134,12 @@ export default function AuthForm({
       return;
     }
 
-    onSubmit(event);
+    // Pass the local state object cleanly to the parent's submit function
+    onSubmit(formData); 
   };
 
   const selectedRoleConfig = selectedRole ? ROLE_CONFIG[selectedRole] : null;
-
+  
   return (
     <div>
       {/* Selected Role Display */}
@@ -142,7 +172,7 @@ export default function AuthForm({
                 label="Full Name"
                 name="fullName"
                 value={fullName}
-                onChange={handleFieldChange("fullName", setFullName)}
+                onChange={handleFieldChange("fullName")}
                 onBlur={handleFieldBlur("fullName")}
                 error={errors.fullName}
                 aria-invalid={errors.fullName ? "true" : "false"}
@@ -155,7 +185,7 @@ export default function AuthForm({
                   label="Institute Name"
                   name="instituteName"
                   value={instituteName}
-                  onChange={handleFieldChange("instituteName", setInstituteName)}
+                  onChange={handleFieldChange("instituteName")}
                   onBlur={handleFieldBlur("instituteName")}
                   error={errors.instituteName}
                   aria-invalid={errors.instituteName ? "true" : "false"}
@@ -172,7 +202,7 @@ export default function AuthForm({
             autoComplete="email"
             maxLength={254}
             value={email}
-            onChange={handleFieldChange("email", setEmail)}
+            onChange={handleFieldChange("email")}
             onBlur={handleFieldBlur("email")}
             error={errors.email}
             aria-invalid={errors.email ? "true" : "false"}
@@ -187,7 +217,7 @@ export default function AuthForm({
             autoComplete={isLogin ? "current-password" : "new-password"}
             maxLength={254}
             value={password}
-            onChange={handleFieldChange("password", setPassword)}
+            onChange={handleFieldChange("password")}
             onBlur={handleFieldBlur("password")}
             error={errors.password}
             placeholder="Enter your password"
@@ -204,9 +234,11 @@ export default function AuthForm({
               label="Confirm Password"
               name="confirmPassword"
               value={confirmPassword}
-              onChange={handleFieldChange("confirmPassword", setConfirmPassword)}
+              onChange={handleFieldChange("confirmPassword")}
               onBlur={handleFieldBlur("confirmPassword")}
               error={errors.confirmPassword}
+              aria-invalid={errors.confirmPassword ? "true" : "false"}
+              aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
               placeholder="Confirm your password"
               icon={Lock}
               isVisible={showConfirmPassword}
@@ -235,7 +267,7 @@ export default function AuthForm({
             {isLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Processing...
+                {isLogin ? "Logging in..." : "Registering..."}
               </>
             ) : (
               <>
