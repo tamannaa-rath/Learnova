@@ -103,6 +103,13 @@ async function publishNotice(request) {
     console.error("Failed to sync notice to MongoDB:", mongoError);
   }
 
+  // Publish to Redis for SSE real-time stream
+  try {
+    await publishNoticeToRedis({ ...newNotice, _id: result.id });
+  } catch (redisError) {
+    console.error("Failed to publish notice to Redis:", redisError);
+  }
+
   return NextResponse.json({
     success: true,
     notice: { id: result.id, ...newNotice },
