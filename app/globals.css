@@ -56,8 +56,8 @@
 
 /* Font display strategy */
 @font-face {
-  font-family: 'YourCustomFont';
-  src: url('/fonts/your-font.woff2') format('woff2');
+  font-family: "YourCustomFont";
+  src: url("/fonts/your-font.woff2") format("woff2");
   font-display: swap;
   /* This helps with font loading */
 }
@@ -265,9 +265,3 @@
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
-
-/* Custom Scrollbar Styles */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-@media (prefers-color-scheme: dark) { ::-webkit-scrollbar-thumb { background: #475569; } }
